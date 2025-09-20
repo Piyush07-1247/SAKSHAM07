@@ -1,98 +1,217 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import React, { useRef, useState } from 'react';
+import {
+  Dimensions,
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+const { width, height } = Dimensions.get('window');
+
+// Mock data for career-related shorts
+const CAREER_SHORTS = [
+  {
+    id: '1',
+    title: 'Top 5 Skills for Software Engineers',
+    creator: 'TechCareer',
+    videoUrl: 'https://youtube.com/shorts/lLiPGyg7hc4?feature=shared',
+    thumbnail: 'https://via.placeholder.com/300x400',
+    likes: 1250,
+    comments: 89,
+    shares: 45,
+  },
+  {
+    id: '2',
+    title: 'How to Ace Your Job Interview',
+    creator: 'CareerGuru',
+    videoUrl: 'https://youtube.com/shorts/6bwRlZOXUlE?feature=shared',
+    thumbnail: 'https://via.placeholder.com/300x400',
+    likes: 2100,
+    comments: 156,
+    shares: 78,
+  },
+  // Add more shorts...
+];
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [liked, setLiked] = useState<{ [key: string]: boolean }>({});
+  const flatListRef = useRef(null);
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  type CareerShort = {
+    id: string;
+    title: string;
+    creator: string;
+    videoUrl: string;
+    thumbnail: string;
+    likes: number;
+    comments: number;
+    shares: number;
+  };
+
+  const renderShort = ({ item }: { item: CareerShort }) => (
+    <View style={styles.shortContainer}>
+      {/* Video Player */}
+      <View style={styles.videoContainer}>
+        <Image source={{ uri: item.thumbnail }} style={styles.video} />
+        
+        {/* Play button overlay */}
+        <TouchableOpacity style={styles.playButton}>
+          <Ionicons name="play" size={50} color="#fff" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Right side actions */}
+      <View style={styles.actionsContainer}>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => setLiked({...liked, [item.id]: !liked[item.id]})}
+        >
+          <Ionicons
+            name={liked[item.id] ? "heart" : "heart-outline"}
+            size={30}
+            color={liked[item.id] ? "#ff3040" : "#fff"}
+          />
+          <Text style={styles.actionText}>{item.likes}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.actionButton}>
+          <Ionicons name="chatbubble-outline" size={30} color="#fff" />
+          <Text style={styles.actionText}>{item.comments}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.actionButton}>
+          <Ionicons name="share-outline" size={30} color="#fff" />
+          <Text style={styles.actionText}>{item.shares}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.actionButton}>
+          <Ionicons name="bookmark-outline" size={30} color="#fff" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Bottom info */}
+      <View style={styles.infoContainer}>
+        <Text style={styles.creator}>@{item.creator}</Text>
+        <Text style={styles.title}>{item.title}</Text>
+        <Text style={styles.hashtags}>#career #growth #skills</Text>
+      </View>
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
+      <FlatList
+        ref={flatListRef}
+        data={CAREER_SHORTS}
+        renderItem={renderShort}
+        keyExtractor={(item) => item.id}
+        pagingEnabled
+        showsVerticalScrollIndicator={false}
+        onMomentumScrollEnd={(event) => {
+          const index = Math.round(event.nativeEvent.contentOffset.y / height);
+          setCurrentIndex(index);
+        }}
+        getItemLayout={(data, index) => ({
+          length: height,
+          offset: height * index,
+          index,
+        })}
+      />
+
+      {/* Top header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Career Shorts</Text>
+        <TouchableOpacity>
+          <Ionicons name="search" size={24} color="#fff" />
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
+  header: {
     position: 'absolute',
+    top: 50,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    zIndex: 1,
+  },
+  headerTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  shortContainer: {
+    width,
+    height,
+    position: 'relative',
+  },
+  videoContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  video: {
+    width: '100%',
+    height: '100%',
+  },
+  playButton: {
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    borderRadius: 50,
+    width: 100,
+    height: 100,
+  },
+  actionsContainer: {
+    position: 'absolute',
+    right: 15,
+    bottom: 100,
+  },
+  actionButton: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  actionText: {
+    color: '#fff',
+    fontSize: 12,
+    marginTop: 5,
+  },
+  infoContainer: {
+    position: 'absolute',
+    bottom: 100,
+    left: 15,
+    right: 80,
+  },
+  creator: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  title: {
+    color: '#fff',
+    fontSize: 14,
+    marginBottom: 5,
+  },
+  hashtags: {
+    color: '#fff',
+    fontSize: 12,
+    opacity: 0.8,
   },
 });
